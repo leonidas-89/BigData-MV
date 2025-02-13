@@ -1,7 +1,35 @@
 # Assesment 1 / Practica 1
 ## Implementa un programa en scala que calcule el radio de un circulo
+```scala
+var pi = 3.1416 
+var circuferencia = 20 
+var resultado1 = circuferencia / (2 * pi)
+println(resultado1)
+3.183091418385536
+```
+El código en Scala calcula el radio de un círculo a partir de su circunferencia usando la fórmula  r = \frac{C}{2\pi} . Declara pi = 3.1416 y circuferencia = 20, luego divide 20 entre 2 * 3.1416, almacenando el resultado en resultado1, que finalmente se imprime en la consola. Salida esperada: 3.1831 aproximadamente.
+
 ## Implementa un programa en scala que me diga si un numero es primo
+```scala
+var numero = 3
+var resultado2 = !(2 to (numero-1)).exists(x => numero % x == 0)
+println(resultado2)
+true
+```
+El código en Scala verifica si 3 es primo comprobando si ningún número en el rango 2 to 2 lo divide exactamente. Usa .exists(x => numero % x == 0) para detectar divisores y ! para negarlo, resultando en true, ya que 3 es primo.
+
 ## Dada la variable bird = "tweet", utiliza interpolación de strings para imprimir
+```scala
+val bird = "Tweet"
+val mensaje2 = "Estoy"
+val mensaje3 = "escribiendo"
+val mensaje4 = "un"
+val resultado3 = s"$mensaje2 $mensaje3 $mensaje4 $bird"
+println (resultado3)
+Estoy escribiendo un Tweet
+```
+El código en Scala usa interpolación de cadenas (s"...") para concatenar las variables mensaje2, mensaje3, mensaje4 y bird, formando la frase "Estoy escribiendo un Tweet", que luego se imprime en la consola.
+
 ## Dada la variable mensaje = "Hola Luke yo soy tu padre!" utiliza slice para extraer secuencia "Luke"
 ```scala
 val mensaje = "Hola Luke yo soy tu padre!"

@@ -15,7 +15,7 @@ val bird = "Tweet"
 val mensaje2 = "Estoy"
 val mensaje3 = "escribiendo"
 val mensaje4 = "un"
-val mensajecompleto = s"$mensaje2 $mensaje3 $mensaje4 $bird"
+val resultado3 = s"$mensaje2 $mensaje3 $mensaje4 $bird"
 println (resultado3)
 
 // 4. Dada la variable mensaje = "Hola Luke yo soy tu padre!" utiliza slice para extraer secuencia "Luke"
