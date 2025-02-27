@@ -1,4 +1,5 @@
 
+## Código 1
 ```scala
 def listEvens(list:List[Int]): String ={
     for(n <- list){
@@ -16,6 +17,7 @@ val l2 = List(4,3,22,55,7,8)
 listEvens(l)
 listEvens(l2)
 ```
+Este código recorre una lista de números, verifica si cada número es par o impar e imprime un mensaje indicando lo que es
 
 ```scala
 //3 7 afortunado
@@ -35,6 +37,7 @@ def afortunado(list:List[Int]): Int={
 val af= List(1,7,7)
 println(afortunado(af))
 ```
+Este código recorre una lista de números y lo suma. Si el número es un 7 entonces adiciona 14 en vez del 7
 
 ```scala
 def balance(list:List[Int]): Boolean={
@@ -74,4 +77,5 @@ val palabra3 = "JUAN"
 
 println(palindromo(palabra))
 println(palindromo(palabra2))
-println(palindromo(palabra3))```
+println(palindromo(palabra3))
+```
