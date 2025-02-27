@@ -10,6 +10,10 @@ var lista = collection.mutable.Set(1,3,3,4,6,7,3,7)
 println(lista)
 // 6. Crea una mapa mutable llamado nombres que contenga los siguiente
 //     "Jose", 20, "Luis", 24, "Ana", 23, "Susana", "27"
-
+val mapamutable = collection.mutable.Map(("Jose", 20), ("Luis", 24), ("Ana", 23), ("Susana", 27))
+println(mapamutable)
 // 6 a . Imprime todas la llaves del mapa
+println(mapamutable.keys)
 // 7 b . Agrega el siguiente valor al mapa("Miguel", 23)
+mapamutable += ("Miguel" -> 23)
+println(mapamutable)
