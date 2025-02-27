@@ -19,6 +19,7 @@ listEvens(l2)
 ```
 Este código recorre una lista de números, verifica si cada número es par o impar e imprime un mensaje indicando lo que es
 
+## Código 2
 ```scala
 //3 7 afortunado
 
@@ -39,6 +40,7 @@ println(afortunado(af))
 ```
 Este código recorre una lista de números y lo suma. Si el número es un 7 entonces adiciona 14 en vez del 7
 
+## Código 3
 ```scala
 def balance(list:List[Int]): Boolean={
     var primera = 0
@@ -65,7 +67,9 @@ balance(bl)
 balance(bl2)
 balance(bl3)
 ```
+Este codigo crea dos balances para comparar si en la iteración de la lista ocurren un punto en el cual ambos balances son iguales. Primero agrega la suma total de la lista y en cada iteración le va restando el valor de la lista y a su vez a la primera le suma cada valor de la lista. Si en alguna iteracion ambos valores son iguales regrsa true en caso contrario es false
 
+## Código 4
 ```scala
 def palindromo(palabra:String):Boolean ={
     return (palabra == palabra.reverse)
@@ -79,3 +83,4 @@ println(palindromo(palabra))
 println(palindromo(palabra2))
 println(palindromo(palabra3))
 ```
+El codigo valida si el input es un palindromo comparando el inputo con el texto invertido mediante el reverse
