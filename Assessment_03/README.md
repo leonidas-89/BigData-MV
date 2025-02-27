@@ -67,7 +67,7 @@ balance(bl)
 balance(bl2)
 balance(bl3)
 ```
-Este codigo crea dos balances para comparar si en la iteración de la lista ocurren un punto en el cual ambos balances son iguales. Primero agrega la suma total de la lista al segundo balance y en cada iteración le va restando el valor de la lista y a su vez, al primer balance se le suma cada valor de la lista. Si en alguna iteracion ambos valores son iguales regresa true en caso contrario es false.
+Este código crea dos balances para comparar si, en la iteración de la lista, ocurre un punto en el cual ambos balances son iguales. Primero, agrega la suma total de la lista al segundo balance y, en cada iteración, le va restando el valor correspondiente de la lista. A su vez, al primer balance se le suma cada valor de la lista. Si en alguna iteración ambos valores son iguales, regresa true; en caso contrario, retorna false.
 
 ## Código 4
 ```scala
@@ -83,4 +83,4 @@ println(palindromo(palabra))
 println(palindromo(palabra2))
 println(palindromo(palabra3))
 ```
-El codigo valida si el input es un palindromo, comparando el input con el texto invertido mediante el reverse.
+El código valida si la entrada es un palíndromo comparándola con su versión invertida mediante la función reverse.
