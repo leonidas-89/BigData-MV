@@ -1,7 +1,7 @@
 # Práctica Evaluatoria
 
 ### 1. Comienza una simple sesión Spark.
-Este código inicializa una sesión de Spark, que es el punto de entrada para realizar operaciones de procesamiento de datos con DataFrames, SQL y otras APIs de Spark.
+Este código inicializa una sesión de Spark, que es el punto de entrada para realizar operaciones de procesamiento de datos con DataFrames, SQL y otras APIs de Spark
 ```scala
 import org.apache.spark.sql.SparkSession
 val spark = SparkSession.builder().getOrCreate()
@@ -11,7 +11,7 @@ val spark = SparkSession.builder().getOrCreate()
 val spark: org.apache.spark.sql.SparkSession = org.apache.spark.sql.SparkSession@59a8891e
 ```
 ### 2. Cargue el archivo Netflix Stock CSV en dataframe llamado df, haga que Spark infiera los tipos de datos.
-Aqui se carga un archivo CSV llamado "Netflix_2011_2016.csv" en un DataFrame de Spark. Usa spark.read para leer el archivo, con option("header", "true") indicando que la primera fila contiene nombres de columnas y option("inferSchema", "true") para que Spark detecte automáticamente los tipos de datos y el resultado se almacena en la variable netflixdf.
+Aqui se carga un archivo CSV llamado "Netflix_2011_2016.csv" en un DataFrame de Spark. Usa spark.read para leer el archivo, con option("header", "true") indicando que la primera fila contiene nombres de columnas y option("inferSchema", "true") para que Spark detecte automáticamente los tipos de datos y el resultado se almacena en la variable netflixdf
 ```scala
 val netflixdf = spark.read.option("header","true").option("inferSchema","true").csv("Netflix_2011_2016.csv")
 ```
@@ -30,7 +30,7 @@ netflixdf.columns
 val res0: Array[String] = Array(Date, Open, High, Low, Close, Volume, Adj Close)
 ```
 ### 4. ¿Cómo es el esquema?
-Muestra la estructura del DataFrame netflixdf, incluyendo los nombres de las columnas, sus tipos de datos (entero, cadena, decimal, etc.) y si permiten valores nulos.
+Muestra la estructura del DataFrame netflixdf, incluyendo los nombres de las columnas, sus tipos de datos (entero, cadena, decimal, etc.) y si permiten valores nulos
 ```scala
 netflixdf.printSchema()
 ```
