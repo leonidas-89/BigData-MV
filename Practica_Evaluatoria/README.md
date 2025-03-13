@@ -59,7 +59,7 @@ Con el metodo describe.show() muestra los detalles sobre el DataFrame, que en es
 ```scala
 netflixdf.describe().show()
 ```
-✅ Resultado
+✅ Resultado \
 En la descripción de los detalles del DataFrame de Netflix, podemos visualizar un resumen estadístico descriptivo sobre las columnas seleccionadas, incluyendo el total de valores no nulos de la columna, promedio de los valores, desviación estándar de los valores de la columna, valor mínimo y máximo. Se aplica .show() para mostrarlo en la consola como se muestra a continuación:
 
 ```scala
