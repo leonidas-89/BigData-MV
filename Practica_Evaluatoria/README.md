@@ -6,7 +6,7 @@ Este código inicializa una sesión de Spark, que es el punto de entrada para re
 import org.apache.spark.sql.SparkSession
 val spark = SparkSession.builder().getOrCreate()
 ```
-✔️Resultado
+✅ Resultado
 ```scala
 val spark: org.apache.spark.sql.SparkSession = org.apache.spark.sql.SparkSession@59a8891e
 ```
@@ -15,7 +15,7 @@ Aqui se carga un archivo CSV llamado "Netflix_2011_2016.csv" en un DataFrame de 
 ```scala
 val netflixdf = spark.read.option("header","true").option("inferSchema","true").csv("Netflix_2011_2016.csv")
 ```
-✔️Resultado
+✅ Resultado
 
 ```scala
 val netflixdf: org.apache.spark.sql.DataFrame = [Date: date, Open: double ... 5 more fields]
@@ -25,7 +25,7 @@ En este codigo muestra un array de strings que contiene los nombres de las colum
 ```scala
 netflixdf.columns
 ```
-✔️Resultado
+✅ Resultado
 ```scala
 val res0: Array[String] = Array(Date, Open, High, Low, Close, Volume, Adj Close)
 ```
@@ -34,7 +34,7 @@ Muestra la estructura del DataFrame netflixdf, incluyendo los nombres de las col
 ```scala
 netflixdf.printSchema()
 ```
-✔️Resultado
+✅ Resultado
 ```scala
 root
  |-- Date: date (nullable = true)
@@ -50,7 +50,7 @@ Se devuelve un array de las primeras 5 filas del DataFrame netflixdf. A diferenc
 ```scala
 netflixdf.head(5)
 ```
-✔️Resultado
+✅ Resultado
 ```scala
 val res2: Array[org.apache.spark.sql.Row] = Array([2011-10-24,119.100002,120.28000300000001,115.100004,118.839996,120460200,16.977142], [2011-10-25,74.899999,79.390001,74.249997,77.370002,315541800,11.052857000000001], [2011-10-26,78.73,81.420001,75.399997,79.400002,148733900,11.342857], [2011-10-27,82.179998,82.71999699999999,79.249998,80.86000200000001,71190000,11.551428999999999], [2011-10-28,80.280002,84.660002,79.599999,84.14000300000001,57769600,12.02])
 ```
@@ -59,8 +59,7 @@ Con el metodo describe.show() muestra los detalles sobre el DataFrame, que en es
 ```scala
 netflixdf.describe().show()
 ```
-
-✔️Resultado
+✅ Resultado
 En la descripción de los detalles del DataFrame de Netflix, podemos visualizar un resumen estadístico descriptivo sobre las columnas seleccionadas, incluyendo el total de valores no nulos de la columna, promedio de los valores, desviación estándar de los valores de la columna, valor mínimo y máximo. Se aplica .show() para mostrarlo en la consola como se muestra a continuación:
 
 ```scala
@@ -80,8 +79,7 @@ Se creo una copia del dataframe como "netflixdfcopy", endonde se agrego una colu
 ```scala
 val netflixdfcopy = netflixdf.withColumn("HV Ratio",netflixdf("High")/netflixdf("Volume"))
 ```
-
-✔️Resultado
+✅ Resultado
 ```scala
 +----------+-----------------+------------------+----------+-----------------+---------+------------------+--------------------+
 |      Date|             Open|              High|       Low|            Close|   Volume|         Adj Close|            HV Ratio|
@@ -114,8 +112,7 @@ Se utiliza el comando orderBy en donde se especifica el order descendiente (del 
 ```scala
 netflixdf.orderBy($"Open".desc).show(1)
 ```
-
-✔️Resultado
+✅ Resultado
 ```scala
 +----------+----------+----------+----------+----------+--------+----------+
 |      Date|      Open|      High|       Low|     Close|  Volume| Adj Close|
@@ -129,8 +126,7 @@ El precio de cierre "Close" es el precio final al que se negoció un activo (acc
 ```scala
 netflixdf.select(max("Close")).show()
 ```
-
-✔️Resultado
+✅ Resultado
 ```scala
 +----------+
 |max(Close)|
@@ -145,8 +141,7 @@ Con los parametros max y min del comando "select" podemos mostrar en la consola 
 netflixdf.select(max("Volume")).show()
 netflixdf.select(min("Volume")).show()
 ```
-
-✔️Resultado
+✅ Resultado
 ```scala
 +-----------+
 |max(Volume)|
@@ -163,23 +158,79 @@ netflixdf.select(min("Volume")).show()
 
 ### 11. Con Sintaxis Scala/Spark $ conteste lo siguiente:
 ##### a) ¿Cuántos días fue la columna “Close” inferior a $ 600?
+Este código filtra el DataFrame para contar cuántas filas tienen un valor en la columna "Close" menor a 600
 ```scala
-
+netflixdf.filter($"Close"<600).count()
 ```
-
-##### ¿Qué porcentaje del tiempo fue la columna “High” mayor que $ 500?
+✅ Resultado
 ```scala
-
+Long = 1218
+```
+##### b) ¿Qué porcentaje del tiempo fue la columna “High” mayor que $ 500?
+Este código calcula el porcentaje de registros en el DataFrame que tienen un valor en la columna "High" mayor a 500 del total de todos los registros
+```scala
+(netflixdf.filter($"High">500).count()*1.0/netflixdf.count())*100
+```
+✅ Resultado
+```scala
+Double = 4.924543288324067
 ```
 ##### c) ¿Cuál es la correlación de Pearson entre columna “High” y la columna “Volumen”?
+Este código prueba la relación estadística entre las columnas "High" y "Volume"
 ```scala
-
+netflixdf.select(corr("High","Volume")).withColumnRenamed("corr(High, Volume)","Correlación Pearson").show()
+```
+✅ Resultado
+```scala
++--------------------+
+| Correlación Pearson|
++--------------------+
+|-0.20960233287942157|
++--------------------+
 ```
 ##### d) ¿Cuál es el máximo de la columna “High” por año?
+Este código obtiene el valor máximo de la columna "High" para cada año en el DataFrame, primero crea una columna "Año" que extrae el año de la columna "Date", después genera otro DataFrame agrupado por año con su máximo y después muestra el resultado
 ```scala
-
+val yeardf = netflixdf.withColumn("Year",year(netflixdf("Date"))).withColumnRenamed("Year","Año")
+val yearmaxs = yeardf.select($"Año",$"High").groupBy("Año").max().withColumnRenamed("max(High)","Máximo")
+yearmaxs.select($"Año",$"Máximo").orderBy("Año").show()
+```
+✅ Resultado
+```scala
++----+------------------+
+| Año|            Máximo|
++----+------------------+
+|2011|120.28000300000001|
+|2012|        133.429996|
+|2013|        389.159988|
+|2014|        489.290024|
+|2015|        716.159996|
+|2016|129.28999299999998|
++----+------------------+
 ```
 ##### e) ¿Cuál es el promedio de la columna “Close” para cada mes del calendario?
+Este código calcula el promedio mensual de la columna "Close". Primero, agrega una nueva columna "Mes" extrayendo el mes de "Date". Luego, agrupa los datos por mes y calcula el promedio de la columna "Close" usando .mean(). Finalmente, selecciona y muestra los valores de "Mes" y "Promedio"
 ```scala
-
+val monthdf = netflixdf.withColumn("Month",month(netflixdf("Date"))).withColumnRenamed("Month","Mes")
+val monthavgs = monthdf.select($"Mes",$"Close").groupBy("Mes").mean().withColumnRenamed("avg(Close)","Promedio")
+monthavgs.select($"Mes",$"Promedio").orderBy("Mes").show()
+```
+✅ Resultado
+```scala
++---+------------------+
+|Mes|          Promedio|
++---+------------------+
+|  1|212.22613874257422|
+|  2| 254.1954634020619|
+|  3| 249.5825228971963|
+|  4|246.97514271428562|
+|  5|264.37037614150944|
+|  6| 295.1597153490566|
+|  7|243.64747528037387|
+|  8|195.25599892727263|
+|  9|206.09598121568627|
+| 10|205.93297300900903|
+| 11| 194.3172275445545|
+| 12| 199.3700942358491|
++---+------------------+
 ```

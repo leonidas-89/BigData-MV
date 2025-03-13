@@ -1,18 +1,30 @@
 // 1. Comienza una simple sesión Spark.
 import org.apache.spark.sql.SparkSession
 val spark = SparkSession.builder().getOrCreate()
+// val spark: org.apache.spark.sql.SparkSession = org.apache.spark.sql.SparkSession@59a8891e
 
 // 2. Cargue el archivo Netflix Stock CSV en dataframe llamado df, haga que Spark, infiera los tipos de datos.
 val netflixdf = spark.read.option("header","true").option("inferSchema","true").csv("Netflix_2011_2016.csv")
+// val netflixdf: org.apache.spark.sql.DataFrame = [Date: date, Open: double ... 5 more fields]
 
 // 3. ¿Cuáles son los nombres de las columnas?
 netflixdf.columns
+//val res0: Array[String] = Array(Date, Open, High, Low, Close, Volume, Adj Close)
 
 // 4. ¿Cómo es el esquema?
 netflixdf.printSchema()
+// root
+//  |-- Date: date (nullable = true)
+//  |-- Open: double (nullable = true)
+//  |-- High: double (nullable = true)
+//  |-- Low: double (nullable = true)
+//  |-- Close: double (nullable = true)
+//  |-- Volume: integer (nullable = true)
+//  |-- Adj Close: double (nullable = true)
 
 // 5. Imprime las primeras 5 renglones.
 netflixdf.head(5)
+// val res2: Array[org.apache.spark.sql.Row] = Array([2011-10-24,119.100002,120.28000300000001,115.100004,118.839996,120460200,16.977142], [2011-10-25,74.899999,79.390001,74.249997,77.370002,315541800,11.052857000000001], [2011-10-26,78.73,81.420001,75.399997,79.400002,148733900,11.342857], [2011-10-27,82.179998,82.71999699999999,79.249998,80.86000200000001,71190000,11.551428999999999], [2011-10-28,80.280002,84.660002,79.599999,84.14000300000001,57769600,12.02])
 
 // 6. Usa el método describe () para aprender sobre el DataFrame.
 // Con el metodo describe.show() muestar los detalles sobre el DataFrame, que en este caso seria la variable declarada "netflixdf"
@@ -100,3 +112,55 @@ netflixdf.select(min("Volume")).show()
 // +-----------+
 //Con los parametros max y min del comando "select" podemos mostrar en la consola los maximos y minimos de la columna "Volumen"
 
+// 11. Con Sintaxis Scala/Spark $ conteste lo siguiente:
+///a) ¿Cuántos días fue la columna “Close” inferior a $ 600?
+netflixdf.filter($"Close"<600).count()
+//Long = 1218
+
+//b) ¿Qué porcentaje del tiempo fue la columna “High” mayor que $ 500?
+(netflixdf.filter($"High">500).count()*1.0/netflixdf.count())*100
+//Double = 4.924543288324067
+
+//c) ¿Cuál es la correlación de Pearson entre columna “High” y la columna “Volumen”?
+netflixdf.select(corr("High","Volume")).withColumnRenamed("corr(High, Volume)","Correlación Pearson").show()
+//+--------------------+
+//| Correlación Pearson|
+//+--------------------+
+//|-0.20960233287942157|
+//+--------------------+
+
+//d) ¿Cuál es el máximo de la columna “High” por año?
+val yeardf = netflixdf.withColumn("Year",year(netflixdf("Date"))).withColumnRenamed("Year","Año")
+val yearmaxs = yeardf.select($"Año",$"High").groupBy("Año").max().withColumnRenamed("max(High)","Máximo")
+yearmaxs.select($"Año",$"Máximo").orderBy("Año").show()
+// +----+------------------+
+// | Año|            Máximo|
+// +----+------------------+
+// |2011|120.28000300000001|
+// |2012|        133.429996|
+// |2013|        389.159988|
+// |2014|        489.290024|
+// |2015|        716.159996|
+// |2016|129.28999299999998|
+// +----+------------------+
+
+//e e) ¿Cuál es el promedio de la columna “Close” para cada mes del calendario?
+val monthdf = netflixdf.withColumn("Month",month(netflixdf("Date"))).withColumnRenamed("Month","Mes")
+val monthavgs = monthdf.select($"Mes",$"Close").groupBy("Mes").mean().withColumnRenamed("avg(Close)","Promedio")
+monthavgs.select($"Mes",$"Promedio").orderBy("Mes").show()
+// +---+------------------+
+// |Mes|          Promedio|
+// +---+------------------+
+// |  1|212.22613874257422|
+// |  2| 254.1954634020619|
+// |  3| 249.5825228971963|
+// |  4|246.97514271428562|
+// |  5|264.37037614150944|
+// |  6| 295.1597153490566|
+// |  7|243.64747528037387|
+// |  8|195.25599892727263|
+// |  9|206.09598121568627|
+// | 10|205.93297300900903|
+// | 11| 194.3172275445545|
+// | 12| 199.3700942358491|
+// +---+------------------+
