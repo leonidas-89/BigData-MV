@@ -1,21 +1,7 @@
-```scala
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+# Decision Tree Classification
 
+### 1. Importar paquetes
+```scala
 // scalastyle:off println
 package org.apache.spark.examples.ml
 
@@ -25,11 +11,14 @@ import org.apache.spark.ml.classification.DecisionTreeClassificationModel
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer}
+```
 
-
+### 2. Realiza el proceso
+```scala
 // $example off$
 import org.apache.spark.sql.SparkSession
 
+```scala
 object DecisionTreeClassificationExample {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder.appName("DecisionTreeClassificationExample").getOrCreate()
@@ -154,6 +143,18 @@ object DecisionTreeClassificationExample {
     //
     println(s"Learned classification tree model:\n ${treeModel.toDebugString}")
 
+
+    // $example off$
+
+    spark.stop()
+  }
+}
+// scalastyle:on println
+```
+
+### Resultado en terminal
+
+```
     Terminal
     Learned classification tree model:
     DecisionTreeClassificationModel: uid=dtc_f199500fa6b1, depth=2, numNodes=5, numClasses=2, numFeatures=692
@@ -175,13 +176,4 @@ object DecisionTreeClassificationExample {
     Sí           No
    /               \
 Predict: 0.0    Predict: 1.0
-
-
-
-    // $example off$
-
-    spark.stop()
-  }
-}
-// scalastyle:on println
 ```
