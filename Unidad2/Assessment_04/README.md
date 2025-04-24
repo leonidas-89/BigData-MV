@@ -1,6 +1,4 @@
 # Practica_Random Forest
-## Katherynne Plessmann
-## Salomon Cruz Vidal
 
 ### 1. Estas líneas se usan para importar las librerias necesarias para construir, entrenar, transformar y evaluar un modelo de clasificación  Random Forest en Spark.
 ```
