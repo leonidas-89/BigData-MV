@@ -130,7 +130,46 @@ model: org.apache.spark.ml.classification.MultilayerPerceptronClassificationMode
 result: org.apache.spark.sql.DataFrame = [features: vector, label: double ... 3 more fields]
 predictionAndLabels: org.apache.spark.sql.DataFrame = [prediction: double, label: double]
 ```
+Para construir el modelo de clasificación se utilizó el algoritmo Multilayer Perceptron Classifier (MLP) de la biblioteca org.apache.spark.ml.classification. Este modelo es una red neuronal de tipo feedforward que se entrena mediante retropropagación del error.
 
+Primero, se dividió el conjunto de datos preprocesado en dos subconjuntos: entrenamiento (70%) y prueba (30%) usando el método randomSplit, asegurando reproducibilidad con una semilla fija (seed = 1234L).
+```scala
+val splits = irisFinal.randomSplit(Array(0.7, 0.3), seed = 1234L)
+```
+
+Se definió la arquitectura de la red neuronal mediante el siguiente arreglo 
+```scala
+val layers = Array[Int](4, 5, 4, 3)
+```
+
+Esto significa:
+
+-Capa de entrada con 4 nodos: uno por cada característica (longitud y ancho de sépalo y pétalo).
+
+-Primera capa oculta con 5 nodos.
+
+-Segunda capa oculta con 4 nodos.
+
+-La capa de salida con 3 nodos: uno por cada clase posible de la especie (Setosa, Versicolor, Virginica).
+
+Una vez definiendo esto se creó el clasificador con el objeto MultilayerPerceptronClassifier, configurando el número de iteraciones máximas (maxIter = 100), tamaño del bloque (blockSize = 128) y la misma semilla (setSeed(1234L)).
+```scala
+val trainer = new MultilayerPerceptronClassifier()
+  .setLayers(layers)
+  .setBlockSize(128)
+  .setSeed(1234L)
+  .setMaxIter(100)
+```
+
+Se entrenó el modelo con el conjunto de entrenamiento (train) usando .fit(train), 
+```scala
+val model = trainer.fit(train)
+```
+
+Finalmente se aplicó al conjunto de prueba (test) generando un nuevo DataFrame con las predicciones.
+```scala
+val result = model.transform(test)
+```
 ### 8. Imprima los resultados del modelo y de sus observaciones.
 ```scala
 val evaluator = new MulticlassClassificationEvaluator().setMetricName("accuracy")
@@ -141,3 +180,10 @@ println(s"******** Test set accuracy = ${evaluator.evaluate(predictionAndLabels)
 evaluator: org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator = MulticlassClassificationEvaluator: uid=mcEval_1ff81fa15bae, metricName=accuracy, metricLabel=0.0, beta=1.0, eps=1.0E-15
 ******** Test set accuracy = 0.96 ********
 ```
+Una vez entrenado el modelo, se evaluó su desempeño utilizando el evaluador MulticlassClassificationEvaluator, con la métrica "accuracy" (precisión), la cual mide la proporción de instancias clasificadas correctamente sobre el total.
+
+El resultado fue 0.96 lo cual indica que el modelo clasificó correctamente el 96% de los registros del conjunto de prueba, lo cual es un desempeño muy alto, considerando que se trata de un conjunto de datos balanceado y bien estructurado como el de Iris.
+
+Conclusiones:
+
+La alta precisión sugiere que la red neuronal fue capaz de captar las diferencias de la manera correcta entre las especies florales; es posible seguir experimentando con la arquitectura del modelo (por ejemplo, el número de capas o neuronas por capa) para intentar mejorar o validar la robustez del resultado.
