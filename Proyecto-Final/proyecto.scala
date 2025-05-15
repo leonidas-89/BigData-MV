@@ -46,22 +46,55 @@ val spark = SparkSession.builder().getOrCreate()
 
 //Se genera el dataframe
 println(s"******** Carga del archivo a un dataframe ********")
-val bankDF = spark.read.option("header","true").option("inferSchema","true").csv("bank-full.csv")
+val bankDF = spark.read.option("header","true").option("inferSchema","true").option("delimiter", ";").csv("bank-full.csv")
 
 println(s"********Eliminar duplicados y vacíos ********")
 val bank = bankDF.na.drop().dropDuplicates()
+bankDF.show()
 
 println(s"******** Transformación del datafame ********")
 val indexer = new StringIndexer().setInputCol("y").setOutputCol("label").fit(bank)
 
-// Etiquetas a clasificar
+// Convertir strings a valores numericos - Transforming string into numerical values
+println(s"******** Convertir strings a valores numericos ********")
+val jobIndexer = new StringIndexer().setInputCol("job").setOutputCol("jobIndex").fit(bank)
+val maritalIndexer = new StringIndexer().setInputCol("marital").setOutputCol("maritalIndex").fit(bank)
+val educationIndexer = new StringIndexer().setInputCol("education").setOutputCol("educationIndex").fit(bank)
+val defaultIndexer = new StringIndexer().setInputCol("default").setOutputCol("defaultIndex").fit(bank)
+val housingIndexer = new StringIndexer().setInputCol("housing").setOutputCol("housingIndex").fit(bank)
+val loanIndexer = new StringIndexer().setInputCol("loan").setOutputCol("loanIndex").fit(bank)
+val contactIndexer = new StringIndexer().setInputCol("contact").setOutputCol("contactIndex").fit(bank)
+val monthIndexer = new StringIndexer().setInputCol("month").setOutputCol("monthIndex").fit(bank)
+val poutcomeIndexer = new StringIndexer().setInputCol("poutcome").setOutputCol("poutcomeIndex").fit(bank)
+
+// Convertir los valores numericos a One Hot Encoding 0 - 1
+println(s"******** One Hot Encoding ********")
+val jobEncoder = new OneHotEncoder().setInputCol("jobIndex").setOutputCol("jobVec")
+val maritalEncoder = new OneHotEncoder().setInputCol("maritalIndex").setOutputCol("maritalVec")
+val educationEncoder = new OneHotEncoder().setInputCol("educationIndex").setOutputCol("educationVec")
+val defaultEncoder = new OneHotEncoder().setInputCol("defaultIndex").setOutputCol("defaultVec")
+val housingEncoder = new OneHotEncoder().setInputCol("housingIndex").setOutputCol("housingVec")
+val loanEncoder = new OneHotEncoder().setInputCol("loanIndex").setOutputCol("loanVec")
+val contactEncoder = new OneHotEncoder().setInputCol("contactIndex").setOutputCol("contactVec")
+val monthEncoder = new OneHotEncoder().setInputCol("monthIndex").setOutputCol("monthVec")
+val poutcomeEncoder = new OneHotEncoder().setInputCol("poutcomeIndex").setOutputCol("poutcomeVec")
+// (label, features)
+
 val bankIndexed = indexer.transform(bank)
+
+//val assembler = new VectorAssembler().setInputCol(Array("Pclass", "SexVec", "Age", "SibSp", "Parch", "Fare", "EmbarkedVec")).setOutputCol("features")
+val assembler = (new VectorAssembler().setInputCols(Array("jobVec","maritalVec", "educationVec","defaultVec","housingVec","loanVec","contactVec","monthVec","poutcomeVec")).setOutputCol("features"))
+
 // Ensamblar las columnas de características en un solo vector
-val assembler = new VectorAssembler().setInputCols(Array("age", "job", "marital", "education","default","balance","housing","loan","contact","day","month","duration","campaign","pdays","previos","poutcom")).setOutputCol("features")
+println(s"******** Vectorizar las columnas de inputs ********")
+//val assembler = new VectorAssembler().setInputCols(Array("age", "job", "marital", "education","default","balance","housing","loan","contact","day","month","duration","campaign","pdays","previous","poutcome")).setOutputCol("features")
+
+println(s"******** Avenger assemble ********")
 val bankFinal = assembler.transform(bankIndexed).select("features", "label")
 
 
 //Se incia con el proceso iterativo para obtener datos
+println(s"******** Se incia con el proceso iterativo para obtener datos ********")
 val resultados = ListBuffer.empty[(Int,Double,Double)]
 val multiAccuracy : Double
 val regAccuracy : Double
