@@ -29,6 +29,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.DataFrame
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
+import org.joda.time.LocalDateTime
+import org.joda.time.format.DateTimeFormat 
 //import scala.util.Random
 
 // Import del multilayer perceptron
@@ -130,35 +132,41 @@ val bankMLP = transformer.transform(banklogreg).select("features", "label")
 println(" ")
 println(s"******** Se incia con el proceso iterativo para comparar los métodos ********")
 
-val resultados = ListBuffer.empty[(Int,Double,Double,Int)]
+// se genera lista de resultados
+val resultados = ListBuffer.empty[(Int,Int,Double,Double,Double,Long)]
 //var randArray = new Array[Int](capasMax + 1)
 
 for( i <- 1 to iteraciones ){
     println("⌛️ Ejecutandose iteración: " + i + "...")
-    val randseed = randombetween(1000,2000)
+    val randseed = randombetween(1000,1500)
 
 //************************************
 //**** Multilayer Perceptron *********
 //************************************
-
-var splits = bankMLP.randomSplit(Array(0.7, 0.3), seed = randseed)
-var train = splits(0)
-var test = splits(1)
+  val procesoInicioMLP = System.currentTimeMillis()
+  var splits = bankMLP.randomSplit(Array(0.7, 0.3), seed = randseed)
+  var train = splits(0)
+  var test = splits(1)
 
 // definición de capas
-var layers = Array[Int](4, 5, 4, 3)
-var trainer = new MultilayerPerceptronClassifier().setLayers(layers).setBlockSize(128).setSeed(randseed).setMaxIter(100)
+  var layers = Array[Int](4, 5, 4, 3)
+  var trainer = new MultilayerPerceptronClassifier().setLayers(layers).setBlockSize(128).setSeed(randseed).setMaxIter(100)
 
 //entrenar
-var model = trainer.fit(train)
-var result = model.transform(test)
-var predictionAndLabels = result.select("prediction", "label")
-var evaluator = new MulticlassClassificationEvaluator().setMetricName("accuracy")
-var multiAccuracy = evaluator.evaluate(predictionAndLabels)
+  var model = trainer.fit(train)
+  var result = model.transform(test)
+  var predictionAndLabels = result.select("prediction", "label")
+  var evaluator = new MulticlassClassificationEvaluator().setMetricName("accuracy")
+  var accuracyMLP = evaluator.evaluate(predictionAndLabels)
+  val procesoFinMLP = System.currentTimeMillis()
+  val duracionMLP = procesoFinMLP - procesoInicioMLP
+
+  println("✅ MultiLayer Perceptron")
 
 //************************************
 //*********** Regresion **************
 //************************************
+  val procesoInicioREG = System.currentTimeMillis()
   val Array(trainingREG, testREG) = banklogreg.randomSplit(Array(0.7, 0.3), seed = randseed)
   val lr = new LogisticRegression()
   val pipeline = new Pipeline().setStages(Array(jobIndexer,maritalIndexer,educationIndexer,defaultIndexer,housingIndexer,loanIndexer,contactIndexer,monthIndexer,poutcomeIndexer,jobEncoder,maritalEncoder,educationEncoder,defaultEncoder,housingEncoder,loanEncoder,contactEncoder,monthEncoder,poutcomeEncoder,assembler,lr))
@@ -167,12 +175,14 @@ var multiAccuracy = evaluator.evaluate(predictionAndLabels)
 
   val resultsREG = modelREG.transform(testREG)
   val evaluatorREG = new MulticlassClassificationEvaluator().setLabelCol("label").setPredictionCol("prediction").setMetricName("accuracy")
-  val regAccuracy = evaluatorREG.evaluate(resultsREG)
+  val accuracyREG = evaluatorREG.evaluate(resultsREG)
+  val procesoFinREG = System.currentTimeMillis()
+  val duracionREG = procesoFinREG - procesoInicioREG
 
-  println("✅ Regresión Logistica")
+  println("✅ Regresion Lineal")
   println(" ")
 
-    resultados += ((i, multiAccuracy, regAccuracy, randseed))
+    resultados += ((i, randseed, accuracyMLP, duracionMLP, accuracyREG, duracionREG))
 
 }
 
@@ -182,7 +192,7 @@ var multiAccuracy = evaluator.evaluate(predictionAndLabels)
 //finalSeq.foreach(println)
 
 println(s"******** Resultados de las ejecuciones ********")
-val resultadosDF = spark.sparkContext.parallelize(resultados).toDF("Ejecución","Multilayer Perceptron Accuracy","Logistics Regression","LR Randomseed")
+val resultadosDF = spark.sparkContext.parallelize(resultados).toDF("Iteración","Semilla","MLP Accuracy","MLP Duración (ms)","LR Accuracy", "LR Duración (ms)")
 resultadosDF.show()
 
 println(s"******** Resumen estadístico de los resultados ********")
