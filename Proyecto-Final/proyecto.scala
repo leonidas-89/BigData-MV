@@ -128,7 +128,7 @@ println(" ")
 println(s"******** Se incia con el proceso iterativo para comparar los métodos ********")
 
 val resultados = ListBuffer.empty[(Int,Double,Double,Int)]
-var randArray = new Array[Int](capasMax + 1)
+//var randArray = new Array[Int](capasMax + 1)
 
 for( i <- 1 to iteraciones ){
     println("⌛️ Ejecutandose iteración: " + i + "...")
