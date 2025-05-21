@@ -23,6 +23,7 @@
 
 
 // Import
+println(" ")
 println(s"******** Importando librerias ********")
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.DataFrame
@@ -46,11 +47,13 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
 // Funciones
-
+println(" ")
+print("******** Definiendo funciones globales ")
 def randombetween(min: Int, max: Int): Int =
   min + Random.nextInt(max - min)
 
 // GLOBALES
+println(" ")
 print("******** Favor de ingresar la cantidad de iteraciones a realizar: ")
 println("")
 
