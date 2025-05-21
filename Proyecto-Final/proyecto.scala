@@ -23,9 +23,11 @@
 
 
 // Import
+println(s"******** Importando librerias ********")
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.DataFrame
 import scala.collection.mutable.ListBuffer
+import scala.util.Random
 //import scala.util.Random
 
 // Import del multilayer perceptron
@@ -46,11 +48,18 @@ import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
 
 // Funciones
+
 def randombetween(min: Int, max: Int): Int =
   min + Random.nextInt(max - min)
 
 // GLOBALES
-val iteraciones = 30
+print("******** Favor de ingresar la cantidad de iteraciones a realizar: ")
+println("")
+
+val iteraciones = scala.io.StdIn.readInt()
+println(s"Se realizarán "+ iteraciones + " iteraciones")
+println("")
+
 val nodosMin = 2
 val nodosMax = 5
 val capasMin = 0
@@ -60,23 +69,25 @@ val capasMax = 5
 val spark = SparkSession.builder().getOrCreate()
 
 //Se genera el dataframe
+println(" ")
 println(s"******** Carga del archivo a un dataframe ********")
 val bankDF = spark.read.option("header","true").option("inferSchema","true").option("delimiter", ";").csv("bank-full.csv")
 
+println(" ")
 println(s"********Eliminar duplicados y vacíos ********")
 val bank = bankDF.na.drop().dropDuplicates()
-bankDF.show()
-
 
 // Pasos para la regresion logistica
 val banklogreg2 = (bank.select(bank("y").as("label"), $"age", $"job", $"marital", $"education", $"default", $"balance", $"housing", $"loan", $"contact", $"day", $"month", $"duration", $"campaign", $"pdays", $"previous",$"poutcome"))
-banklogreg2.show()
 
 // Se converite el label a binario
+println(" ")
+println(s"********Conversión a binario del label ********")
 val banklogreg = banklogreg2.withColumn("label", when(col("label") === "yes", 1).otherwise(0))
 banklogreg.show()
 
 // Conversion de strings a valores numericos
+
 val jobIndexer = new StringIndexer().setInputCol("job").setOutputCol("jobIndex")
 val maritalIndexer = new StringIndexer().setInputCol("marital").setOutputCol("maritalIndex")
 val educationIndexer = new StringIndexer().setInputCol("education").setOutputCol("educationIndex")
@@ -98,26 +109,34 @@ val contactEncoder = new OneHotEncoder().setInputCol("contactIndex").setOutputCo
 val monthEncoder = new OneHotEncoder().setInputCol("monthIndex").setOutputCol("monthVec")
 val poutcomeEncoder = new OneHotEncoder().setInputCol("poutcomeIndex").setOutputCol("poutcomeVec")
 
+
 val assembler = (new VectorAssembler()
                   .setInputCols(Array("age","jobVec", "maritalVec","educationVec","defaultVec","balance","housingVec","loanVec","contactVec","day","monthVec","duration","campaign","pdays","previous","poutcomeVec"))
                   .setOutputCol("features"))
 
 //Se incia con el proceso iterativo para obtener datos
-println(s"******** Se incia con el proceso iterativo para obtener datos ********")
-val resultados = ListBuffer.empty[(Int,Double,Double)]
+println(" ")
+println(s"******** Se incia con el proceso iterativo para comparar los métodos ********")
+
+val resultados = ListBuffer.empty[(Int,Double,Double,Int)]
 var multiAccuracy : Double = 0.0
 var regAccuracy : Double = 0.0
 //val r = new scala.util.Random
 var randArray = new Array[Int](capasMax + 1)
 
+
 for( i <- 1 to iteraciones ){
-    println("⌛️ Ejecutandose iteración:" + i)
+    println("⌛️ Ejecutandose iteración: " + i + "...")
 
-//**************************Multilayer
+//************************************
+//*********** Multilayer *************
+//************************************
 
-
-//**************************Regresion
-  val Array(training, test) = banklogreg.randomSplit(Array(0.7, 0.3), seed = 12345)
+//************************************
+//*********** Regresion **************
+//************************************
+  val randseed = randombetween(1000,2000)
+  val Array(training, test) = banklogreg.randomSplit(Array(0.7, 0.3), seed = randseed)
   val lr = new LogisticRegression()
   val pipeline = new Pipeline().setStages(Array(jobIndexer,maritalIndexer,educationIndexer,defaultIndexer,housingIndexer,loanIndexer,contactIndexer,monthIndexer,poutcomeIndexer,jobEncoder,maritalEncoder,educationEncoder,defaultEncoder,housingEncoder,loanEncoder,contactEncoder,monthEncoder,poutcomeEncoder,assembler,lr))
 
@@ -127,9 +146,10 @@ for( i <- 1 to iteraciones ){
   val evaluator = new MulticlassClassificationEvaluator().setLabelCol("label").setPredictionCol("prediction").setMetricName("accuracy")
   val accuracy = evaluator.evaluate(results)
 
-  println("Regresión Logistica ✅")
+  println("✅ Regresión Logistica")
+  println(" ")
 
-    resultados += ((i, multiAccuracy, evaluator.evaluate(results)))
+    resultados += ((i, multiAccuracy, evaluator.evaluate(results), randseed))
 
 }
 
@@ -139,26 +159,9 @@ for( i <- 1 to iteraciones ){
 //finalSeq.foreach(println)
 
 println(s"******** Resultados de las ejecuciones ********")
-val resultadosDF = spark.sparkContext.parallelize(resultados).toDF("Ejecución","Multilayer Perceptron Accuracy","Logistics Regression")
+val resultadosDF = spark.sparkContext.parallelize(resultados).toDF("Ejecución","Multilayer Perceptron Accuracy","Logistics Regression","LR Randomseed")
 resultadosDF.show()
 
-// +---------+------------------------------+--------------------+
-// |Ejecución|Multilayer Perceptron Accuracy|Logistics Regression|
-// +---------+------------------------------+--------------------+
-// |        1|                          10.1|                10.1|
-// |       19|                          10.1|                10.1|
-// |       20|                          10.1|                10.1|
-// +---------+------------------------------+--------------------+
 
 println(s"******** Resumen estadístico de los resultados ********")
 resultadosDF.describe().show()
-// +-------+-----------------+------------------------------+--------------------+
-// |summary|        Ejecución|Multilayer Perceptron Accuracy|Logistics Regression|
-// +-------+-----------------+------------------------------+--------------------+
-// |  count|               30|                            30|                  30|
-// |   mean|             15.5|            10.100000000000001|  10.100000000000001|
-// | stddev|8.803408430829505|                           0.0|                 0.0|
-// |    min|                1|                          10.1|                10.1|
-// |    max|               30|                          10.1|                10.1|
-// +-------+-----------------+------------------------------+--------------------+
-
