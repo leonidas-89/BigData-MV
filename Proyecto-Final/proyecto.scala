@@ -25,16 +25,24 @@
 // Import
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.DataFrame
+import scala.collection.mutable.ListBuffer
 //import scala.util.Random
 
 // Import del multilayer perceptron
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer, VectorAssembler, OneHotEncoder}
-import org.apache.spark.ml.{Pipeline, PipelineStage}
-import scala.collection.mutable.ListBuffer
+//import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer, VectorAssembler, OneHotEncoder}
+//import org.apache.spark.ml.{Pipeline, PipelineStage}
+//import scala.collection.mutable.ListBuffer
 
 // Import del regression
+import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.ml.feature.{VectorAssembler, StringIndexer, VectorIndexer, OneHotEncoder}
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.mllib.evaluation.MulticlassMetrics
+
 
 
 // Funciones
@@ -59,114 +67,40 @@ println(s"********Eliminar duplicados y vacíos ********")
 val bank = bankDF.na.drop().dropDuplicates()
 bankDF.show()
 
-println(s"******** Transformación del datafame ********")
 
-import org.apache.spark.ml.Pipeline
-val indexer = new StringIndexer().setInputCol("y").setOutputCol("label").fit(bank)
+// Pasos para la regresion logistica
+val banklogreg2 = (bank.select(bank("y").as("label"), $"age", $"job", $"marital", $"education", $"default", $"balance", $"housing", $"loan", $"contact", $"day", $"month", $"duration", $"campaign", $"pdays", $"previous",$"poutcome"))
+banklogreg2.show()
 
-val indexers = Array(
-  indexer,
-  jobIndexer,   maritalIndexer,   educationIndexer,
-  defaultIndexer, housingIndexer, loanIndexer,
-  contactIndexer, monthIndexer,   poutcomeIndexer
-)
+// Se converite el label a binario
+val banklogreg = banklogreg2.withColumn("label", when(col("label") === "yes", 1).otherwise(0))
+banklogreg.show()
 
-val encoders = Array(
-  jobEncoder,   maritalEncoder,   educationEncoder,
-  defaultEncoder, housingEncoder, loanEncoder,
-  contactEncoder, monthEncoder,   poutcomeEncoder
-)
+// Conversion de strings a valores numericos
+val jobIndexer = new StringIndexer().setInputCol("job").setOutputCol("jobIndex")
+val maritalIndexer = new StringIndexer().setInputCol("marital").setOutputCol("maritalIndex")
+val educationIndexer = new StringIndexer().setInputCol("education").setOutputCol("educationIndex")
+val defaultIndexer = new StringIndexer().setInputCol("default").setOutputCol("defaultIndex")
+val housingIndexer = new StringIndexer().setInputCol("housing").setOutputCol("housingIndex")
+val loanIndexer = new StringIndexer().setInputCol("loan").setOutputCol("loanIndex")
+val contactIndexer = new StringIndexer().setInputCol("contact").setOutputCol("contactIndex")
+val monthIndexer = new StringIndexer().setInputCol("month").setOutputCol("monthIndex")
+val poutcomeIndexer = new StringIndexer().setInputCol("poutcome").setOutputCol("poutcomeIndex")
 
-// assemble features at the end
-val stages: Array[PipelineStage] = indexers ++ encoders ++ Array(assembler)
-val pipeline = new Pipeline().setStages(stages)
+// Convertir los valores numericos a One Hot Encoding 0 - 1
+val jobEncoder = new OneHotEncoder().setInputCol("jobIndex").setOutputCol("jobVec")
+val maritalEncoder = new OneHotEncoder().setInputCol("maritalIndex").setOutputCol("maritalVec")
+val educationEncoder = new OneHotEncoder().setInputCol("educationIndex").setOutputCol("educationVec")
+val defaultEncoder = new OneHotEncoder().setInputCol("defaultIndex").setOutputCol("defaultVec")
+val housingEncoder = new OneHotEncoder().setInputCol("housingIndex").setOutputCol("housingVec")
+val loanEncoder = new OneHotEncoder().setInputCol("loanIndex").setOutputCol("loanVec")
+val contactEncoder = new OneHotEncoder().setInputCol("contactIndex").setOutputCol("contactVec")
+val monthEncoder = new OneHotEncoder().setInputCol("monthIndex").setOutputCol("monthVec")
+val poutcomeEncoder = new OneHotEncoder().setInputCol("poutcomeIndex").setOutputCol("poutcomeVec")
 
-val pipelineModel = pipeline.fit(bank)
-val bankFinal     = pipelineModel.transform(bank).select("features","label")
-
-// // 1) Create unfitted StringIndexers
-// val indexers: Array[PipelineStage] = Array(
-//     new StringIndexer().setInputCol("y").setOutputCol("label"),
-//     new StringIndexer().setInputCol("job").setOutputCol("jobIndex"),
-//     new StringIndexer().setInputCol("marital").setOutputCol("maritalIndex"),
-//     new StringIndexer().setInputCol("education").setOutputCol("educationIndex"),
-//     new StringIndexer().setInputCol("default").setOutputCol("defaultIndex"),
-//     new StringIndexer().setInputCol("housing").setOutputCol("housingIndex"),
-//     new StringIndexer().setInputCol("loan").setOutputCol("loanIndex"),
-//     new StringIndexer().setInputCol("contact").setOutputCol("contactIndex"),
-//     new StringIndexer().setInputCol("month").setOutputCol("monthIndex"),
-//     new StringIndexer().setInputCol("poutcome").setOutputCol("poutcomeIndex")
-// )
-
-// // 2) Create OneHotEncoders (still unfitted)
-// val encoders: Array[PipelineStage] = Array(
-//     new OneHotEncoder().setInputCol("jobIndex").setOutputCol("jobVec"),
-//     new OneHotEncoder().setInputCol("maritalIndex").setOutputCol("maritalVec"),
-//     new OneHotEncoder().setInputCol("educationIndex").setOutputCol("educationVec"),
-//     new OneHotEncoder().setInputCol("defaultIndex").setOutputCol("defaultVec"),
-//     new OneHotEncoder().setInputCol("housingIndex").setOutputCol("housingnVec"),
-//     new OneHotEncoder().setInputCol("loanIndex").setOutputCol("loanVec"),
-//     new OneHotEncoder().setInputCol("contactIndex").setOutputCol("contactVec"),
-//     new OneHotEncoder().setInputCol("monthIndex").setOutputCol("monthVec"),
-//     new OneHotEncoder().setInputCol("poutcomeIndex").setOutputCol("poutcomeVec")
-// )
-
-// // 3) VectorAssembler to collect all the "*Vec" columns into "features"
-// val assemblerStage = new VectorAssembler().setInputCols(Array( "jobVec","maritalVec","educationVec","defaultVec","housingnVec","loanVec","contactVec","monthVec","poutcomeVec")).setOutputCol("features")
-
-// // 4) Build and run the pipeline
-// val pipeline = new Pipeline().setStages(indexers ++ encoders ++ Array(assemblerStage))
-
-// val pipelineModel = pipeline.fit(bank)
-// val bankFinal     = pipelineModel.transform(bank).select("features","label")
-// val indexer = new StringIndexer().setInputCol("y").setOutputCol("label").fit(bank)
-
-// // Convertir strings a valores numericos - Transforming string into numerical values
-// println(s"******** Convertir strings a valores numericos ********")
-// val jobIndexer = new StringIndexer().setInputCol("job").setOutputCol("jobIndex").fit(bank)
-// val maritalIndexer = new StringIndexer().setInputCol("marital").setOutputCol("maritalIndex").fit(bank)
-// val educationIndexer = new StringIndexer().setInputCol("education").setOutputCol("educationIndex").fit(bank)
-// val defaultIndexer = new StringIndexer().setInputCol("default").setOutputCol("defaultIndex").fit(bank)
-// val housingIndexer = new StringIndexer().setInputCol("housing").setOutputCol("housingIndex").fit(bank)
-// val loanIndexer = new StringIndexer().setInputCol("loan").setOutputCol("loanIndex").fit(bank)
-// val contactIndexer = new StringIndexer().setInputCol("contact").setOutputCol("contactIndex").fit(bank)
-// val monthIndexer = new StringIndexer().setInputCol("month").setOutputCol("monthIndex").fit(bank)
-// val poutcomeIndexer = new StringIndexer().setInputCol("poutcome").setOutputCol("poutcomeIndex").fit(bank)
-
-// // Convertir los valores numericos a One Hot Encoding 0 - 1
-// println(s"******** One Hot Encoding ********")
-// val jobEncoder = new OneHotEncoder().setInputCol("jobIndex").setOutputCol("jobVec")
-// val maritalEncoder = new OneHotEncoder().setInputCol("maritalIndex").setOutputCol("maritalVec")
-// val educationEncoder = new OneHotEncoder().setInputCol("educationIndex").setOutputCol("educationVec")
-// val defaultEncoder = new OneHotEncoder().setInputCol("defaultIndex").setOutputCol("defaultVec")
-// val housingEncoder = new OneHotEncoder().setInputCol("housingIndex").setOutputCol("housingVec")
-// val loanEncoder = new OneHotEncoder().setInputCol("loanIndex").setOutputCol("loanVec")
-// val contactEncoder = new OneHotEncoder().setInputCol("contactIndex").setOutputCol("contactVec")
-// val monthEncoder = new OneHotEncoder().setInputCol("monthIndex").setOutputCol("monthVec")
-// val poutcomeEncoder = new OneHotEncoder().setInputCol("poutcomeIndex").setOutputCol("poutcomeVec")
-// // (label, features)
-
-// val bankIndexed = indexer.transform(bank)
-
-// println(s"******** Transformación de los campos de texto ********")
-// val bank1 = jobEncoder.transform(jobIndexer.transform(bankIndexed))
-// val bank2 = maritalEncoder.transform(maritalIndexer.transform(bank1))
-// val bank3 = educationEncoder.transform(educationIndexer.transform(bank2))
-// val bank4 = defaultEncoder.transform(educationIndexer.transform(bank3))
-// val bank5 = housingEncoder.transform(educationIndexer.transform(bank4))
-// val bank6 = loanEncoder.transform(educationIndexer.transform(bank5))
-// val bank7 = contactEncoder.transform(educationIndexer.transform(bank6))
-// val bank8 = monthEncoder.transform(educationIndexer.transform(bank7))
-// val bank9 = poutcomeEncoder.transform(educationIndexer.transform(bank8))
-
-// //val assembler = new VectorAssembler().setInputCol(Array("Pclass", "SexVec", "Age", "SibSp", "Parch", "Fare", "EmbarkedVec")).setOutputCol("features")
-// println(s"******** Vectorizar las columnas de inputs ********")
-// val assembler = (new VectorAssembler().setInputCols(Array("jobVec","maritalVec", "educationVec","defaultVec","housingVec","loanVec","contactVec","monthVec","poutcomeVec")).setOutputCol("features"))
-
-// //val assembler = new VectorAssembler().setInputCols(Array("age", "job", "marital", "education","default","balance","housing","loan","contact","day","month","duration","campaign","pdays","previous","poutcome")).setOutputCol("features")
-
-// println(s"******** Avenger assemble ********")
-// val bankFinal = assembler.transform(bank3).select("features","label")
+val assembler = (new VectorAssembler()
+                  .setInputCols(Array("age","jobVec", "maritalVec","educationVec","defaultVec","balance","housingVec","loanVec","contactVec","day","monthVec","duration","campaign","pdays","previous","poutcomeVec"))
+                  .setOutputCol("features"))
 
 //Se incia con el proceso iterativo para obtener datos
 println(s"******** Se incia con el proceso iterativo para obtener datos ********")
@@ -175,39 +109,27 @@ var multiAccuracy : Double = 0.0
 var regAccuracy : Double = 0.0
 //val r = new scala.util.Random
 var randArray = new Array[Int](capasMax + 1)
-var splits = bankFinal.randomSplit(Array(0.7, 0.3), seed = 1234L)
-var train = splits(0)
-var test = splits(1)
+
 for( i <- 1 to iteraciones ){
     println("⌛️ Ejecutandose iteración:" + i)
 
 //**************************Multilayer
-    // definición de capas
-    for (iArray <- capasMin to capasMax){
-        println("CapasMin: "+ capasMin + " | CapasMax: " + capasMax)
-        randArray(iArray) = randombetween(nodosMin, nodosMax)
-        println(randArray)
-        // agregar a array para ser usado en lso layers
-    }
-
-//var layers : Array[Int] = randArray
-val layers = Array[Int](4, 5, 4, 3)
-
-// definción de entrenador
-var trainer = new MultilayerPerceptronClassifier().setLayers(layers).setBlockSize(128).setSeed(1234L).setMaxIter(100)
-
-//entrenar
-var model = trainer.fit(train)
-
-var result = model.transform(test)
-var predictionAndLabels = result.select("prediction", "label")
-var evaluator = new MulticlassClassificationEvaluator().setMetricName("accuracy")
-multiAccuracy = evaluator.evaluate(predictionAndLabels)
 
 
 //**************************Regresion
+  val Array(training, test) = banklogreg.randomSplit(Array(0.7, 0.3), seed = 12345)
+  val lr = new LogisticRegression()
+  val pipeline = new Pipeline().setStages(Array(jobIndexer,maritalIndexer,educationIndexer,defaultIndexer,housingIndexer,loanIndexer,contactIndexer,monthIndexer,poutcomeIndexer,jobEncoder,maritalEncoder,educationEncoder,defaultEncoder,housingEncoder,loanEncoder,contactEncoder,monthEncoder,poutcomeEncoder,assembler,lr))
 
-    resultados += ((i, multiAccuracy, regAccuracy))
+  val model = pipeline.fit(training)
+
+  val results = model.transform(test)
+  val evaluator = new MulticlassClassificationEvaluator().setLabelCol("label").setPredictionCol("prediction").setMetricName("accuracy")
+  val accuracy = evaluator.evaluate(results)
+
+  println("Regresión Logistica ✅")
+
+    resultados += ((i, multiAccuracy, evaluator.evaluate(results)))
 
 }
 
