@@ -45,8 +45,6 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
 
-
-
 // Funciones
 
 def randombetween(min: Int, max: Int): Int =
@@ -87,7 +85,8 @@ val banklogreg = banklogreg2.withColumn("label", when(col("label") === "yes", 1)
 banklogreg.show()
 
 // Conversion de strings a valores numericos
-
+println(" ")
+println(s"******** Vectorización ********")
 val jobIndexer = new StringIndexer().setInputCol("job").setOutputCol("jobIndex")
 val maritalIndexer = new StringIndexer().setInputCol("marital").setOutputCol("maritalIndex")
 val educationIndexer = new StringIndexer().setInputCol("education").setOutputCol("educationIndex")
@@ -111,45 +110,66 @@ val poutcomeEncoder = new OneHotEncoder().setInputCol("poutcomeIndex").setOutput
 
 
 val assembler = (new VectorAssembler()
-                  .setInputCols(Array("age","jobVec", "maritalVec","educationVec","defaultVec","balance","housingVec","loanVec","contactVec","day","monthVec","duration","campaign","pdays","previous","poutcomeVec"))
-                  .setOutputCol("features"))
+                  .setInputCols(Array("age","jobVec", "maritalVec","educationVec","defaultVec","balance","housingVec","loanVec","contactVec","day","monthVec","duration","campaign","pdays","previous","poutcomeVec")).setOutputCol("features"))
 
+//val bankMLP = assembler.transform(irisdfIndexed).select("features", "label")
+val pipelineTransform = new Pipeline().setStages(Array(
+  jobIndexer, maritalIndexer, educationIndexer, defaultIndexer, housingIndexer,
+  loanIndexer, contactIndexer, monthIndexer, poutcomeIndexer,
+  jobEncoder, maritalEncoder, educationEncoder, defaultEncoder, housingEncoder,
+  loanEncoder, contactEncoder, monthEncoder, poutcomeEncoder,
+  assembler
+))
+
+val transformer = pipelineTransform.fit(banklogreg)
+val bankMLP = transformer.transform(banklogreg).select("features", "label")
 //Se incia con el proceso iterativo para obtener datos
 println(" ")
 println(s"******** Se incia con el proceso iterativo para comparar los métodos ********")
 
 val resultados = ListBuffer.empty[(Int,Double,Double,Int)]
-var multiAccuracy : Double = 0.0
-var regAccuracy : Double = 0.0
-//val r = new scala.util.Random
 var randArray = new Array[Int](capasMax + 1)
-
 
 for( i <- 1 to iteraciones ){
     println("⌛️ Ejecutandose iteración: " + i + "...")
+    val randseed = randombetween(1000,2000)
 
 //************************************
-//*********** Multilayer *************
+//**** Multilayer Perceptron *********
 //************************************
+
+var splits = bankMLP.randomSplit(Array(0.7, 0.3), seed = randseed)
+var train = splits(0)
+var test = splits(1)
+
+// definición de capas
+var layers = Array[Int](4, 5, 4, 3)
+var trainer = new MultilayerPerceptronClassifier().setLayers(layers).setBlockSize(128).setSeed(randseed).setMaxIter(100)
+
+//entrenar
+var model = trainer.fit(train)
+var result = model.transform(test)
+var predictionAndLabels = result.select("prediction", "label")
+var evaluator = new MulticlassClassificationEvaluator().setMetricName("accuracy")
+var multiAccuracy = evaluator.evaluate(predictionAndLabels)
 
 //************************************
 //*********** Regresion **************
 //************************************
-  val randseed = randombetween(1000,2000)
-  val Array(training, test) = banklogreg.randomSplit(Array(0.7, 0.3), seed = randseed)
+  val Array(trainingREG, testREG) = banklogreg.randomSplit(Array(0.7, 0.3), seed = randseed)
   val lr = new LogisticRegression()
   val pipeline = new Pipeline().setStages(Array(jobIndexer,maritalIndexer,educationIndexer,defaultIndexer,housingIndexer,loanIndexer,contactIndexer,monthIndexer,poutcomeIndexer,jobEncoder,maritalEncoder,educationEncoder,defaultEncoder,housingEncoder,loanEncoder,contactEncoder,monthEncoder,poutcomeEncoder,assembler,lr))
 
-  val model = pipeline.fit(training)
+  val modelREG = pipeline.fit(trainingREG)
 
-  val results = model.transform(test)
-  val evaluator = new MulticlassClassificationEvaluator().setLabelCol("label").setPredictionCol("prediction").setMetricName("accuracy")
-  val accuracy = evaluator.evaluate(results)
+  val resultsREG = modelREG.transform(testREG)
+  val evaluatorREG = new MulticlassClassificationEvaluator().setLabelCol("label").setPredictionCol("prediction").setMetricName("accuracy")
+  val regAccuracy = evaluatorREG.evaluate(resultsREG)
 
   println("✅ Regresión Logistica")
   println(" ")
 
-    resultados += ((i, multiAccuracy, evaluator.evaluate(results), randseed))
+    resultados += ((i, multiAccuracy, regAccuracy, randseed))
 
 }
 
@@ -161,7 +181,6 @@ for( i <- 1 to iteraciones ){
 println(s"******** Resultados de las ejecuciones ********")
 val resultadosDF = spark.sparkContext.parallelize(resultados).toDF("Ejecución","Multilayer Perceptron Accuracy","Logistics Regression","LR Randomseed")
 resultadosDF.show()
-
 
 println(s"******** Resumen estadístico de los resultados ********")
 resultadosDF.describe().show()
