@@ -36,9 +36,7 @@ import org.joda.time.format.DateTimeFormat
 // Import del multilayer perceptron
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-//import org.apache.spark.ml.feature.{IndexToString, StringIndexer, VectorIndexer, VectorAssembler, OneHotEncoder}
-//import org.apache.spark.ml.{Pipeline, PipelineStage}
-//import scala.collection.mutable.ListBuffer
+import org.apache.spark.ml.linalg.Vector
 
 // Import del regression
 import org.apache.spark.ml.classification.LogisticRegression
@@ -133,7 +131,7 @@ println(" ")
 println(s"******** Se incia con el proceso iterativo para comparar los métodos ********")
 
 // se genera lista de resultados
-val resultados = ListBuffer.empty[(Int,Int,Double,Double,Double,Long)]
+val resultados = ListBuffer.empty[(Int,Int,Double,Double,Double,Double)]
 //var randArray = new Array[Int](capasMax + 1)
 
 for( i <- 1 to iteraciones ){
@@ -149,7 +147,13 @@ for( i <- 1 to iteraciones ){
   var test = splits(1)
 
 // definición de capas
-  var layers = Array[Int](4, 5, 4, 3)
+  val firstRow = bankMLP.select("features").head()
+  val firstFeatureVector = firstRow.getAs[Vector]("features")
+  val inputSize = firstFeatureVector.size
+  //println("inputsize: " + inputSize)
+  val numClasses = bankMLP.select("label").distinct().count().toInt
+  //println("numClasses: " + numClasses)
+  var layers = Array[Int](inputSize, 5, 4, numClasses)
   var trainer = new MultilayerPerceptronClassifier().setLayers(layers).setBlockSize(128).setSeed(randseed).setMaxIter(100)
 
 //entrenar
