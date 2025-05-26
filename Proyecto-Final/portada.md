@@ -3,6 +3,7 @@
 ## FACULTAD DE CONTADURÍA Y ADMINISTRACIÓN 
 
 ### Maestría en Gestión de las Tecnologías de la Información y Comunicación 
+![UABC](uabclogo.png)
 
 **“Practica Evaluatoria – Proyecto Final"**
 #
@@ -15,3 +16,5 @@ Dr. Jose Christian Romero Hernandez
 #
 __Tijuana, Baja California__ -
 __28 de Mayo de 2025__
+
+[⬅️ Volver al Índice](./indice.md)
