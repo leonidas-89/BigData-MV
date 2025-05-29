@@ -48,5 +48,43 @@
 |    max|               30|              1429|  0.8895866802979407|   40053.580078125|   0.906724189229396|29849.518798828125|
 +-------+-----------------+------------------+--------------------+------------------+--------------------+------------------+
 ```
+### Análisis Detallado de las Iteraciones
+Al examinar los resultados de las 30 iteraciones, se observan varios patrones importantes:
+
+Precisión (Accuracy): La Regresión Logística consistentemente supera al Multilayer Perceptron en términos de precisión. La precisión media de LR (90.10%) es superior a la de MLP (88.27%), con una diferencia de aproximadamente 1.83 puntos porcentuales.
+
+Estabilidad: La Regresión Logística muestra una menor desviación estándar en la precisión (0.0016 frente a 0.0030 del MLP), lo que indica que sus resultados son más estables y menos dependientes de la semilla aleatoria utilizada para la división de datos.
+
+Tiempo de Ejecución: El Multilayer Perceptron es generalmente más rápido, con un tiempo medio de ejecución de 4220.27 ms, mientras que la Regresión Logística requiere en promedio 5347.33 ms, aproximadamente un 26.7% más de tiempo.
+
+Variabilidad en Tiempo: El MLP muestra una mayor variabilidad en los tiempos de ejecución (desviación estándar de 646.69 ms) en comparación con la Regresión Logística (268.78 ms). Esto sugiere que el rendimiento temporal del MLP es menos predecible.
+
+Casos Extremos: La primera iteración muestra el tiempo de ejecución más alto para ambos algoritmos (7545.0 ms para MLP y 6503.0 ms para LR), lo que podría indicar algún tipo de sobrecarga inicial en el entorno de ejecución.
+
+Semillas Repetidas: Se observa que la semilla 1383 se utiliza en las iteraciones 2 y 6, y la semilla 1311 en las iteraciones 14 y 17. En ambos casos, los resultados son idénticos para cada algoritmo, lo que confirma la reproducibilidad del experimento
+cuando se utiliza la misma semilla.
+
+### Interpretación Global
+
+La Regresión Logística demuestra ser superior en términos de precisión para este conjunto de datos específico de marketing bancario. Esta superioridad es consistente a lo largo de todas las iteraciones, lo que sugiere que no es un resultado casual sino una característica inherente al problema y los datos.
+
+El mejor rendimiento de la Regresión Logística podría explicarse por varias razones:
+
+Naturaleza del Problema: La predicción de si un cliente suscribirá un depósito a plazo podría ser un problema que se ajusta bien a un modelo lineal, donde las relaciones entre las variables predictoras y la variable objetivo son relativamente directas.
+
+Tamaño del Conjunto de Datos: El conjunto de datos de marketing bancario podría no ser lo suficientemente grande como para que el Multilayer Perceptron aproveche plenamente su capacidad para modelar relaciones complejas.
+
+Configuración del MLP: La arquitectura específica del MLP utilizada (capas de tamaño [inputSize, 5, 4, 2]) podría no ser óptima para este problema particular. Una arquitectura diferente o un ajuste más fino de hiperparámetros podría mejorar su rendimiento.
+
+Compensación entre Precisión y Tiempo
+Existe una clara compensación (trade-off) entre precisión y tiempo de ejecución. La Regresión Logística ofrece mayor precisión pero requiere más tiempo, mientras que el Multilayer Perceptron es más rápido pero menos preciso. Esta compensación es un aspecto importante a considerar al seleccionar un algoritmo para aplicaciones prácticas:
+
+Si la prioridad es la precisión y el tiempo de procesamiento no es crítico, la Regresión Logística sería la elección preferida.
+
+Si se requiere un procesamiento más rápido y se puede tolerar una ligera reducción en la precisión, el Multilayer Perceptron podría ser más adecuado.
+
+Estabilidad y Reproducibilidad
+La menor variabilidad en la precisión de la Regresión Logística sugiere que este algoritmo es más robusto frente a diferentes divisiones de datos. Esta estabilidad es una característica deseable en entornos de producción donde la consistencia de los resultados es importante. La reproducibilidad exacta de los resultados cuando se utiliza la misma semilla aleatoria confirma la correcta implementación del código y la determinística naturaleza de los algoritmos cuando se controlan adecuadamente los factores aleatorios.
+
 
 [⬅️ Volver al Índice](./indice.md)
